@@ -11,7 +11,7 @@
 - [x] Python: match table (17 columns), matching R on every row and column
 - [x] Python: round and phase summaries
 - [x] Parity tests passing for all three outputs
-- [ ] Charts ported to plotnine
+- [x] Charts ported to plotnine
 - [ ] Full write-up
 
 ## Findings so far
@@ -21,13 +21,23 @@
 3. **`case_when`'s fallback has to be carried over exactly.** R's `round_name` falls back to the original text label ("R1"), not the round number. Translating it with `np.select` meant making the `default` the original label column, not the number.
 4. **Missing values never equal each other.** A quick `==` comparison flagged 109 matching rows as different, because `NaN == NaN` is false in pandas (and `NA == NA` gives `NA` in R). `pandas.testing.assert_frame_equal` treats matching missing values as equal, so the parity tests use it.
 5. **Two labels for one phase, kept on purpose.** The original R code labels the later phase "Mid/Late Season" in the match table but "Rest of Season" in the summaries. Python reproduces both, because parity means matching R, quirks included. Like the Footscray nickname, it is a candidate for a coordinated fix in both languages later.
+6. **An average of averages is not an average.** The season average line in both charts first came out slightly wrong because I averaged the round averages. Rounds don't all have the same number of games (the Opening Round has four, bye rounds fewer than nine), so each round needs weighting by its games, or the mean taken across matches directly. The R app avoided this by reading the line from a separate reference file.
+7. **A deliberate scope change.** The original dashboard drew its reference lines from a hand-compiled file of yearly averages. This project calculates them from the match data instead, so the whole pipeline runs from one raw input with nothing maintained by hand.
 
-## Run what exists so far
+## Charts
+
+![Average points per team by round, 2025](charts/round_by_round_2025.png)
+
+![Round-by-round comparison of the last three seasons](charts/season_comparison.png)
+
+## Run it
 
 ```bash
 uv sync
-Rscript r/pipeline.R                      # writes r_outputs/
-uv run pytest tests/test_pipeline.py -v   # unit tests for the functions ported so far
+Rscript r/pipeline.R                  # writes r_outputs/
+uv run python python/pipeline.py      # writes py_outputs/
+uv run python python/charts.py        # writes charts/
+uv run pytest -v                      # parity and unit tests
 ```
 
 ## Data
