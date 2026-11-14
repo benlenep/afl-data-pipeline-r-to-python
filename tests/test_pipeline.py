@@ -54,3 +54,26 @@ def test_winner_draw_and_derived_fields():
     assert list(md["avg_team_score"]) == [90.0, 70.0]
     assert list(md["home_100_plus"]) == [True, False]
     assert list(md["away_nickname"]) == ["Lions", "Lions"]
+
+def test_round_summary_games_add_up():
+    raw = make_raw([(2023, 1, "Regular", 90, 80)] * 3 + [(2023, 2, "Regular", 100, 70)] * 2)
+    md = pipeline.build_match_data(pipeline.filter_regular(raw), [])
+    rs = pipeline.round_summary(md)
+    assert list(rs["games"]) == [3, 2]
+    assert rs["games"].sum() == len(md)
+
+
+def test_pct_100_plus_counts_either_team():
+    raw = make_raw([(2023, 1, "Regular", 100, 50), (2023, 1, "Regular", 50, 100),
+                    (2023, 1, "Regular", 60, 60), (2023, 1, "Regular", 70, 80)])
+    md = pipeline.build_match_data(pipeline.filter_regular(raw), [])
+    assert pipeline.round_summary(md)["pct_100_plus"].iloc[0] == 50.0
+
+
+def test_100_plus_and_phase_summary():
+    raw = make_raw([(2023, 1, "Regular", 100, 50), (2023, 6, "Regular", 70, 80), (2023, 7, "Regular", 90, 90)])
+    md = pipeline.build_match_data(pipeline.filter_regular(raw), [])
+    assert list(md["home_100_plus"]) == [True, False, False]
+    assert list(md["away_100_plus"]) == [False, False, False]
+    ps = pipeline.phase_summary(md)
+    assert list(ps["phase"]) == ["Early (Rds 0-6)", "Rest of Season"]

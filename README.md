@@ -9,8 +9,8 @@
 - [x] Python: home-and-away filter
 - [x] Python: Opening Round detection (seasons whose Round 1 has fewer than 7 games)
 - [x] Python: match table (17 columns), matching R on every row and column
-- [ ] Python: round and phase summaries
-- [ ] Parity tests passing for all three outputs
+- [x] Python: round and phase summaries
+- [x] Parity tests passing for all three outputs
 - [ ] Charts ported to plotnine
 - [ ] Full write-up
 
@@ -20,6 +20,7 @@
 2. **`mutate` sees its own new columns; pandas does not.** In dplyr, `season_phase = ifelse(round <= 6, ...)` uses the `round` recoded earlier in the same `mutate`. In pandas, a reference to the raw round column silently keeps the old values, which misclassified matches in the Opening Round seasons until I pointed it at the recoded round.
 3. **`case_when`'s fallback has to be carried over exactly.** R's `round_name` falls back to the original text label ("R1"), not the round number. Translating it with `np.select` meant making the `default` the original label column, not the number.
 4. **Missing values never equal each other.** A quick `==` comparison flagged 109 matching rows as different, because `NaN == NaN` is false in pandas (and `NA == NA` gives `NA` in R). `pandas.testing.assert_frame_equal` treats matching missing values as equal, so the parity tests use it.
+5. **Two labels for one phase, kept on purpose.** The original R code labels the later phase "Mid/Late Season" in the match table but "Rest of Season" in the summaries. Python reproduces both, because parity means matching R, quirks included. Like the Footscray nickname, it is a candidate for a coordinated fix in both languages later.
 
 ## Run what exists so far
 

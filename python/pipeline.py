@@ -181,6 +181,22 @@ def round_summary(match_data):
     Columns: season, round, games, avg_team_score, avg_combined, avg_margin,
     median_combined, max_combined, min_combined, pct_100_plus.
     """
+    return (
+        match_data
+        .assign(any_100 = lambda d: d["home_100_plus"] | d["away_100_plus"])
+        .groupby(["season", "round"], as_index=False)
+        .agg(
+            games           = ("round", "size"),
+            avg_team_score  = ("avg_team_score", "mean"),
+            avg_combined    = ("combined_score", "mean"),
+            avg_margin      = ("margin", "mean"),
+            median_combined = ("combined_score", "median"),
+            max_combined    = ("combined_score", "max"),
+            min_combined    = ("combined_score", "min"),
+            pct_100_plus    = ("any_100", "mean"),
+        )
+        .assign(pct_100_plus=lambda d: d["pct_100_plus"] * 100)
+    )
     raise NotImplementedError
 
 
@@ -193,6 +209,20 @@ def phase_summary(match_data):
 
     Columns: season, phase, games, avg_team_score, avg_combined, avg_margin, pct_100_plus.
     """
+    return (
+            match_data
+            .assign(any_100 = lambda d: d["home_100_plus"] | d["away_100_plus"])
+            .assign(phase = lambda d: np.where(d["round"] <= 6, "Early (Rds 0-6)", "Rest of Season"))
+            .groupby(["season", "phase"], as_index=False)
+            .agg(
+                games           = ("round", "size"),
+                avg_team_score  = ("avg_team_score", "mean"),
+                avg_combined    = ("combined_score", "mean"),
+                avg_margin      = ("margin", "mean"),
+                pct_100_plus    = ("any_100", "mean"),
+            )
+            .assign(pct_100_plus=lambda d: d["pct_100_plus"] * 100)
+        )
     raise NotImplementedError
 
 
